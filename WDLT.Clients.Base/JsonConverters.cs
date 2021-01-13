@@ -38,4 +38,25 @@ namespace WDLT.Clients.Base
             serializer.Serialize(writer, value);
         }
     }
+
+    public class LongToPriceJsonConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var jt = JToken.ReadFrom(reader);
+            var l = jt.Value<long>();
+
+            return Math.Round((double)l / 100);
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return typeof(double) == objectType;
+        }
+    }
 }

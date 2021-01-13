@@ -63,7 +63,7 @@ namespace WDLT.Clients.Base
             return JsonConvert.DeserializeObject<T>(response.Content);
         }
 
-        public async Task<IRestResponse> RequestRawAsync(IRestRequest request, Proxy proxy = null)
+        public virtual async Task<IRestResponse> RequestRawAsync(IRestRequest request, Proxy proxy = null)
         {
             if (proxy != null)
             {

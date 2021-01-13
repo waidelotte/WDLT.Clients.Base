@@ -11,20 +11,34 @@ namespace WDLT.Clients.Base
 {
     public abstract class BaseClient
     {
-        protected readonly RestClient _client;
+        protected RestClient _client;
 
-        protected BaseClient(string host, string userAgent)
+        protected BaseClient(string userAgent)
         {
-            if (string.IsNullOrWhiteSpace(host)) throw new ArgumentException("Empty Host!");
+            CreateClient(null, userAgent);
+        }
 
-            _client = new RestClient(host)
+        protected BaseClient(string baseHost, string userAgent)
+        {
+            CreateClient(baseHost, userAgent);
+        }
+
+        private void CreateClient(string baseHost, string userAgent)
+        {
+            if (string.IsNullOrWhiteSpace(baseHost))
             {
-                UserAgent = userAgent,
-                AllowMultipleDefaultParametersWithSameName = false,
-                Timeout = 10000
-            };
+                _client = new RestClient();
+            }
+            else
+            {
+                _client = new RestClient(baseHost);
+                _client.AddDefaultHeader("referer", baseHost);
+            }
 
-            _client.AddDefaultHeader("referer", host);
+            _client.UserAgent = userAgent;
+            _client.AllowMultipleDefaultParametersWithSameName = false;
+            _client.Timeout = 10000;
+            
             _client.AddDefaultHeader("Accept", "application/json, text/plain, */*");
             _client.AddDefaultHeader("Accept-Language", "en-GB,en-US;q=0.9,en,ru;q=0.8,uk;q=0.7");
             _client.AddDefaultHeader("Cache-Control", "no-cache");

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -11,45 +10,46 @@ namespace WDLT.Clients.Base
 {
     public abstract class BaseClient
     {
-        protected RestClient _client;
+        protected readonly RestClient _client;
+
+        private readonly string _userAgent;
+        private readonly string _baseHost;
 
         protected BaseClient(string userAgent)
         {
-            CreateClient(null, userAgent);
+            _userAgent = userAgent;
+            _client = CreateClient(null);
         }
 
         protected BaseClient(string baseHost, string userAgent)
         {
-            CreateClient(baseHost, userAgent);
+            _baseHost = baseHost;
+            _userAgent = userAgent;
+            _client = CreateClient(baseHost);
         }
 
-        private void CreateClient(string baseHost, string userAgent)
+        public RestClient CreateClient(string baseHost)
         {
-            if (string.IsNullOrWhiteSpace(baseHost))
-            {
-                _client = new RestClient();
-            }
-            else
-            {
-                _client = new RestClient(baseHost);
-                _client.AddDefaultHeader("referer", baseHost);
-            }
+            var client = string.IsNullOrWhiteSpace(baseHost) ? new RestClient() : new RestClient(baseHost);
 
-            _client.UserAgent = userAgent;
-            _client.AllowMultipleDefaultParametersWithSameName = false;
-            _client.Timeout = 10000;
-            
-            _client.AddDefaultHeader("Accept", "application/json, text/plain, */*");
-            _client.AddDefaultHeader("Accept-Language", "en-GB,en-US;q=0.9,en,ru;q=0.8,uk;q=0.7");
-            _client.AddDefaultHeader("Cache-Control", "no-cache");
+            client.UserAgent = _userAgent;
+            client.AllowMultipleDefaultParametersWithSameName = false;
+            client.Timeout = 10000;
 
-            _client.ConfigureWebRequest(r =>
+            client.AddDefaultHeader("Accept", "application/json, text/plain, */*");
+            client.AddDefaultHeader("Accept-Language", "en-GB,en-US;q=0.9,en,ru;q=0.8,uk;q=0.7");
+            client.AddDefaultHeader("Cache-Control", "no-cache");
+
+            client.ConfigureWebRequest(r =>
             {
+                r.KeepAlive = false;
                 r.ServicePoint.Expect100Continue = false;
                 r.ServicePoint.ConnectionLimit = int.MaxValue;
                 r.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
                 r.CachePolicy = new RequestCachePolicy(RequestCacheLevel.NoCacheNoStore);
             });
+
+            return client;
         }
 
         public void SetUserAgent(string value)
@@ -59,17 +59,34 @@ namespace WDLT.Clients.Base
 
         public async Task<T> RequestAsync<T>(IRestRequest request, Proxy proxy = null)
         {
-            var response = await RequestRawAsync(request, proxy).ConfigureAwait(false);
+            var response = await RequestRawAsync(request, proxy);
             return JsonConvert.DeserializeObject<T>(response.Content);
         }
 
-        public virtual async Task<IRestResponse> RequestRawAsync(IRestRequest request, Proxy proxy = null)
+        protected virtual void OnBeforeRequest(RestClient client, IRestRequest request, Proxy proxy = null)
         {
+
+        }
+
+        protected virtual void OnAfterRequest(RestClient client, IRestResponse response, Proxy proxy = null)
+        {
+
+        }
+
+        public Task<IRestResponse> RequestRawAsync(IRestRequest request, Proxy proxy = null)
+        {
+            return RequestRawAsync(_client, request, proxy);
+        }
+
+        public async Task<IRestResponse> RequestRawAsync(RestClient client, IRestRequest request, Proxy proxy = null)
+        {
+            OnBeforeRequest(client, request, proxy);
+
             if (proxy != null)
             {
                 if (!string.IsNullOrWhiteSpace(proxy.Login) && !string.IsNullOrWhiteSpace(proxy.Password))
                 {
-                    _client.Proxy = new WebProxy(proxy.Address, proxy.Port)
+                    client.Proxy = new WebProxy(proxy.Address, proxy.Port)
                     {
                         UseDefaultCredentials = false,
                         Credentials = new NetworkCredential(proxy.Login, proxy.Password)
@@ -77,11 +94,11 @@ namespace WDLT.Clients.Base
                 }
                 else
                 {
-                    _client.Proxy = new WebProxy(proxy.Address, proxy.Port);
+                    client.Proxy = new WebProxy(proxy.Address, proxy.Port);
                 }
             }
 
-            var response = await _client.ExecuteAsync(request).ConfigureAwait(false);
+            var response = await client.ExecuteAsync(request).ConfigureAwait(false);
             proxy?.Request();
 
             if (response.StatusCode != HttpStatusCode.OK)
@@ -97,6 +114,9 @@ namespace WDLT.Clients.Base
             }
 
             proxy?.SuccessRequest();
+
+            OnAfterRequest(client, response, proxy);
+
             return response;
         }
 

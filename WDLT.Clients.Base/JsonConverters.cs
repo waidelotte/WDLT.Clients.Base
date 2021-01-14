@@ -41,7 +41,7 @@ namespace WDLT.Clients.Base
 
     public class LongToPriceJsonConverter : JsonConverter
     {
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
         }
@@ -57,6 +57,27 @@ namespace WDLT.Clients.Base
         public override bool CanConvert(Type objectType)
         {
             return typeof(double) == objectType;
+        }
+    }
+
+    public class PriceToLongJsonConverter : JsonConverter
+    {
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var jt = JToken.ReadFrom(reader);
+            var l = jt.Value<double>();
+
+            return (long)(l * 100);
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return typeof(long) == objectType;
         }
     }
 }

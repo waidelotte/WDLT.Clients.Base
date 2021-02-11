@@ -39,7 +39,7 @@ namespace WDLT.Clients.Base
         }
     }
 
-    public class LongToPriceJsonConverter : JsonConverter
+    public class LongToDoublePriceJsonConverter : JsonConverter
     {
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
@@ -51,7 +51,7 @@ namespace WDLT.Clients.Base
             var jt = JToken.ReadFrom(reader);
             var l = jt.Value<long>();
 
-            return Math.Round((double)l / 100);
+            return Math.Round((double)l / 100, 2);
         }
 
         public override bool CanConvert(Type objectType)

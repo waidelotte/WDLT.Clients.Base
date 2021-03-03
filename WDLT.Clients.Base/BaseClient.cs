@@ -18,21 +18,21 @@ namespace WDLT.Clients.Base
         protected BaseClient(string userAgent)
         {
             _userAgent = userAgent;
-            _client = CreateClient(null);
+            _client = CreateClient(null, userAgent);
         }
 
         protected BaseClient(string baseHost, string userAgent)
         {
             _baseHost = baseHost;
             _userAgent = userAgent;
-            _client = CreateClient(baseHost);
+            _client = CreateClient(baseHost, userAgent);
         }
 
-        public RestClient CreateClient(string baseHost)
+        public static RestClient CreateClient(string baseHost, string userAgent)
         {
             var client = string.IsNullOrWhiteSpace(baseHost) ? new RestClient() : new RestClient(baseHost);
 
-            client.UserAgent = _userAgent;
+            client.UserAgent = userAgent;
             client.AllowMultipleDefaultParametersWithSameName = false;
             client.Timeout = 10000;
 
@@ -82,6 +82,33 @@ namespace WDLT.Clients.Base
         {
             OnBeforeRequest(client, request, proxy);
 
+            SetProxy(client, proxy);
+
+            var response = await client.ExecuteAsync(request);
+            proxy?.Request();
+
+            HandleResponse(response, proxy);
+            OnAfterRequest(client, response, proxy);
+
+            return response;
+        }
+
+        public static async Task<string> GetStringAsync(IRestRequest request, Proxy proxy = null)
+        {
+            var client = CreateClient(null, null);
+
+            SetProxy(client, proxy);
+
+            var response = await client.ExecuteAsync(request);
+            proxy?.Request();
+
+            HandleResponse(response, proxy);
+
+            return response.Content;
+        }
+
+        private static void SetProxy(IRestClient client, Proxy proxy)
+        {
             if (proxy != null)
             {
                 if (!string.IsNullOrWhiteSpace(proxy.Login) && !string.IsNullOrWhiteSpace(proxy.Password))
@@ -97,10 +124,10 @@ namespace WDLT.Clients.Base
                     client.Proxy = new WebProxy(proxy.Address, proxy.Port);
                 }
             }
+        }
 
-            var response = await client.ExecuteAsync(request).ConfigureAwait(false);
-            proxy?.Request();
-
+        private static void HandleResponse(IRestResponse response, Proxy proxy)
+        {
             if (response.StatusCode != HttpStatusCode.OK)
             {
                 proxy?.Error();
@@ -114,10 +141,6 @@ namespace WDLT.Clients.Base
             }
 
             proxy?.SuccessRequest();
-
-            OnAfterRequest(client, response, proxy);
-
-            return response;
         }
 
     }

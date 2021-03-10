@@ -10,25 +10,26 @@ namespace WDLT.Clients.Base
 {
     public abstract class BaseClient
     {
+        public string DefaultUserAgent { get; protected set; }
+
         protected readonly RestClient _client;
 
-        private readonly string _userAgent;
         private readonly string _baseHost;
 
         protected BaseClient(string userAgent)
         {
-            _userAgent = userAgent;
+            DefaultUserAgent = userAgent;
             _client = CreateClient(null, userAgent);
         }
 
         protected BaseClient(string baseHost, string userAgent)
         {
             _baseHost = baseHost;
-            _userAgent = userAgent;
+            DefaultUserAgent = userAgent;
             _client = CreateClient(baseHost, userAgent);
         }
 
-        public static RestClient CreateClient(string baseHost, string userAgent)
+        protected static RestClient CreateClient(string baseHost, string userAgent)
         {
             var client = string.IsNullOrWhiteSpace(baseHost) ? new RestClient() : new RestClient(baseHost);
 
@@ -57,7 +58,7 @@ namespace WDLT.Clients.Base
             _client.UserAgent = value;
         }
 
-        public async Task<T> RequestAsync<T>(IRestRequest request, Proxy proxy = null)
+        protected async Task<T> RequestAsync<T>(IRestRequest request, Proxy proxy = null)
         {
             var response = await RequestRawAsync(request, proxy);
             return JsonConvert.DeserializeObject<T>(response.Content);

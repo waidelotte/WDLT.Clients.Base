@@ -108,7 +108,7 @@ namespace WDLT.Clients.Base
             return response.Content;
         }
 
-        private static void SetProxy(IRestClient client, Proxy proxy)
+        protected static void SetProxy(IRestClient client, Proxy proxy)
         {
             if (proxy != null)
             {
@@ -127,7 +127,7 @@ namespace WDLT.Clients.Base
             }
         }
 
-        private static void HandleResponse(IRestResponse response, Proxy proxy)
+        protected static void HandleResponse(IRestResponse response, Proxy proxy)
         {
             if (response.StatusCode != HttpStatusCode.OK)
             {
@@ -138,7 +138,7 @@ namespace WDLT.Clients.Base
                     throw new HttpTimeoutException("Too Many Requests");
                 }
 
-                throw new HttpRequestException($"Status code not OK. {response.ErrorMessage} {response.Content}");
+                throw new ClientRequestException(response);
             }
 
             proxy?.SuccessRequest();

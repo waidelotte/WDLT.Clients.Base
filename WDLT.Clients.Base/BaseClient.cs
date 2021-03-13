@@ -135,7 +135,7 @@ namespace WDLT.Clients.Base
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     proxy?.Ban();
-                    throw new HttpTimeoutException("Too Many Requests");
+                    throw new HttpTimeoutException(response);
                 }
 
                 throw new ClientRequestException(response);

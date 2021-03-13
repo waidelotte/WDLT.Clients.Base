@@ -1,11 +1,13 @@
 ﻿using System;
+using RestSharp;
 
 namespace WDLT.Clients.Base.Exceptions
 {
-    public class HttpTimeoutException : Exception
+    public class HttpTimeoutException : ClientRequestException
     {
-        public HttpTimeoutException() {  }
+        public HttpTimeoutException(IRestResponse response) : base(response)
+        {
 
-        public HttpTimeoutException(string message) : base(message) { }
+        }
     }
 }

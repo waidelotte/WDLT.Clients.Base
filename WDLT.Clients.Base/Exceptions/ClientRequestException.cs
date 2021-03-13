@@ -1,7 +1,7 @@
 ﻿using System.Net.Http;
 using RestSharp;
 
-namespace WDLT.Clients.Base
+namespace WDLT.Clients.Base.Exceptions
 {
     public class ClientRequestException : HttpRequestException
     {

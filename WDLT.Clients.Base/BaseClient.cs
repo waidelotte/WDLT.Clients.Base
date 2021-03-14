@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System;
+using System.IO;
+using System.Net;
 using System.Net.Cache;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -108,6 +110,12 @@ namespace WDLT.Clients.Base
             return response.Content;
         }
 
+        protected Task DownloadAsync(Uri uri, string saveTo)
+        {
+            var bytes = _client.DownloadData(new RestRequest(uri));
+            return File.WriteAllBytesAsync(saveTo, bytes);
+        }
+
         protected static void SetProxy(IRestClient client, Proxy proxy)
         {
             if (proxy != null)
@@ -143,6 +151,5 @@ namespace WDLT.Clients.Base
 
             proxy?.SuccessRequest();
         }
-
     }
 }

@@ -110,7 +110,7 @@ namespace WDLT.Clients.Base
             return response.Content;
         }
 
-        protected Task DownloadAsync(Uri uri, string saveTo)
+        public Task DownloadAsync(Uri uri, string saveTo)
         {
             var bytes = _client.DownloadData(new RestRequest(uri));
             return File.WriteAllBytesAsync(saveTo, bytes);

@@ -110,10 +110,10 @@ namespace WDLT.Clients.Base
             return response.Content;
         }
 
-        public Task DownloadAsync(Uri uri, string saveTo)
+        public async Task DownloadAsync(Uri uri, string saveTo)
         {
-            var bytes = _client.DownloadData(new RestRequest(uri));
-            return File.WriteAllBytesAsync(saveTo, bytes);
+            var response = await _client.ExecuteAsync(new RestRequest(uri));
+            await File.WriteAllBytesAsync(saveTo, response.RawBytes);
         }
 
         protected static void SetProxy(IRestClient client, Proxy proxy)
@@ -150,6 +150,22 @@ namespace WDLT.Clients.Base
             }
 
             proxy?.SuccessRequest();
+        }
+
+        protected static bool TryDeserialize<T>(string json, out T obj)
+        {
+            obj = default;
+
+            try
+            {
+                var des = JsonConvert.DeserializeObject<T>(json);
+                obj = des;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
